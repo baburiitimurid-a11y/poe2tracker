@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>poe2tracker — market pulse</title>
+<style>
+  :root{
+    --bg:#0e0f12; --panel:#15171c; --panel2:#1b1e25; --line:#2a2e37;
+    --ink:#e8e4d8; --muted:#8b8f9a; --faint:#5a5e69;
+    --gold:#d8a94b; --gold-dim:#8a6f34; --divine:#e6c072;
+    --rise:#57c6c0; --fall:#d2694a; --hot:#f0b642;
+    --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+    --disp:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(1200px 500px at 80% -10%, #191b22 0%, transparent 60%),
+      var(--bg);
+    color:var(--ink);font-family:var(--disp);-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 20px 80px}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+    border-bottom:1px solid var(--line);padding-bottom:16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:baseline;gap:12px}
+  .brand h1{font-size:30px;letter-spacing:.5px;margin:0;font-weight:600;text-transform:uppercase}
+  .brand .dot{color:var(--gold)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2.5px;color:var(--faint);
+    text-transform:uppercase}
+  .meta{display:flex;gap:22px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .meta b{color:var(--divine);font-weight:600}
+  section{margin-top:34px}
+  .sec-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .sec-head h2{font-size:15px;letter-spacing:2px;text-transform:uppercase;margin:0;font-weight:600;color:var(--ink)}
+  .sec-head .rule{flex:1;height:1px;background:var(--line)}
+  .sec-head .tag{font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .pulse{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+    border-radius:10px;padding:14px 15px;position:relative;overflow:hidden}
+  .card.hot{border-color:var(--gold-dim)}
+  .card.hot::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(300px 90px at 100% 0%, rgba(240,182,66,.10), transparent 70%)}
+  .card .name{font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .card .cat{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--faint);
+    text-transform:uppercase}
+  .flame{font-size:13px;filter:saturate(1.2)}
+  .card .row{display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px}
+  .price{font-family:var(--mono);font-size:20px;color:var(--divine)}
+  .price .u{font-size:11px;color:var(--faint);margin-left:3px}
+  .mom{font-family:var(--mono);font-size:14px;font-weight:600}
+  .up{color:var(--rise)} .down{color:var(--fall)}
+  .bar{margin-top:11px;height:5px;background:#0a0b0e;border-radius:3px;overflow:hidden}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--hot))}
+  .vlabel{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:5px;
+    display:flex;justify-content:space-between}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px}
+  thead th{text-align:right;color:var(--faint);font-weight:500;letter-spacing:1px;
+    text-transform:uppercase;font-size:10px;padding:8px 10px;border-bottom:1px solid var(--line);
+    cursor:pointer;user-select:none;white-space:nowrap}
+  thead th:first-child{text-align:left}
+  tbody td{text-align:right;padding:9px 10px;border-bottom:1px solid #1d2027}
+  tbody td:first-child{text-align:left;font-family:var(--disp);font-size:14px}
+  tbody tr:hover{background:#181b21}
+  .chip{display:inline-block;font-size:10px;padding:1px 7px;border-radius:20px;border:1px solid var(--line);
+    color:var(--muted)}
+  .chip.Busy{color:var(--rise);border-color:#245} .chip.Quiet{color:var(--fall);border-color:#432}
+  .builds{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+  .asc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:15px 16px}
+  .asc .top{display:flex;justify-content:space-between;align-items:baseline}
+  .asc h3{margin:0;font-size:18px;font-weight:600}
+  .asc .pct{font-family:var(--mono);color:var(--gold);font-size:15px}
+  .asc .sample{font-family:var(--mono);font-size:10px;color:var(--faint)}
+  .asc .skill{font-family:var(--mono);font-size:12px;color:var(--muted);margin:8px 0 12px}
+  .asc .skill b{color:var(--ink)}
+  .slot{border-top:1px solid #1d2027;padding:9px 0}
+  .slot .sname{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint)}
+  .slot .base{font-size:14px;margin-top:2px}
+  .slot .base .p{font-family:var(--mono);color:var(--gold);font-size:12px}
+  .slot .mod{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px;padding-left:10px;
+    border-left:2px solid var(--gold-dim)}
+  .foot{margin-top:50px;color:var(--faint);font-family:var(--mono);font-size:11px;line-height:1.7}
+  .banner{background:#1a1712;border:1px solid var(--gold-dim);color:var(--divine);
+    font-family:var(--mono);font-size:11.5px;padding:9px 13px;border-radius:8px;margin-top:16px}
+  @media (prefers-reduced-motion:no-preference){
+    .card.hot::before{animation:pulse 3.2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Path of Exile 2 · market intelligence</div>
+      <div class="brand"><h1>poe2<span class="dot">·</span>tracker</h1></div>
+    </div>
+    <div class="meta">
+      <div>лига<br><b id="m-league">—</b></div>
+      <div>обновлено<br><b id="m-updated">—</b></div>
+      <div>divine<br><b id="m-divine">—</b> ex</div>
+      <div>снимков<br><b id="m-snaps">—</b></div>
+    </div>
+  </header>
+
+  <div id="sample-banner" class="banner" hidden>
+    Показаны демонстрационные данные — <b>data.json</b> ещё не сгенерирован. После первого прогона
+    трекера (<b>run.py --export</b>) дашборд подхватит реальные цифры.
+  </div>
+
+  <section>
+    <div class="sec-head"><h2>Market Pulse</h2><span class="rule"></span>
+      <span class="tag">объём растёт + цена растёт</span></div>
+    <div class="pulse" id="pulse"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Экономика</h2><span class="rule"></span>
+      <span class="tag" id="eco-count"></span></div>
+    <table id="eco">
+      <thead><tr>
+        <th data-k="name">предмет</th><th data-k="category">кат.</th>
+        <th data-k="price">цена, ex</th><th data-k="momentum_pct">моментум</th>
+        <th data-k="volume">объём</th><th data-k="vol_z">vol z</th><th data-k="vclass">режим</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Спрос билдов</h2><span class="rule"></span>
+      <span class="tag">выборка top-N по популярности</span></div>
+    <div class="builds" id="builds"></div>
+  </section>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const SAMPLE = {
+  league:"Rise of the Abyssal", updated:"демо", divine_ex:"—", snapshots:"—", sample:true,
+  economy:[
+    {name:"Perfect Jeweller's Orb",category:"currency",price:52.4,momentum_pct:22.1,volume:1840,vol_z:2.8,vclass:"Busy",hot:true},
+    {name:"Divine Orb",category:"currency",price:1,momentum_pct:6.3,volume:9200,vol_z:1.4,vclass:"Busy",hot:true},
+    {name:"Chaos Orb",category:"currency",price:0.021,momentum_pct:-1.2,volume:14300,vol_z:0.3,vclass:"Steady",hot:false},
+    {name:"Greater Jeweller's Orb",category:"currency",price:3.1,momentum_pct:17.6,volume:2600,vol_z:2.1,vclass:"Busy",hot:true},
+    {name:"Exalted Orb",category:"currency",price:1,momentum_pct:0,volume:41000,vol_z:0.1,vclass:"Steady",hot:false},
+    {name:"Astramentis",category:"unique",price:118,momentum_pct:-9.4,volume:64,vol_z:1.9,vclass:"Busy",hot:false},
+    {name:"Omen of Whittling",category:"currency",price:9.7,momentum_pct:31.5,volume:410,vol_z:3.1,vclass:"Busy",hot:true},
+    {name:"Soul Core of Tacati",category:"currency",price:2.3,momentum_pct:-14.2,volume:150,vol_z:-1.3,vclass:"Quiet",hot:false},
+  ],
+  builds:[
+    {ascendancy:"Deadeye",pct:33.8,sample_n:200,skills:[["Lightning Arrow",0.79],["Ice Shot",0.11]],
+      slots:[
+        {slot:"Weapon",bases:[["Warmonger Bow",0.62],["Spine Bow",0.19]],
+          mods:[["Adds # to # Lightning Damage",0.71],["#% increased Attack Speed",0.66]]},
+        {slot:"Body",bases:[["Keth Raiment",0.41]],mods:[["+# to maximum Life",0.83],["#% to Chaos Resistance",0.52]]},
+      ]},
+    {ascendancy:"Invoker",pct:16.2,sample_n:108,skills:[["Ice Strike",0.68],["Tempest Flurry",0.2]],
+      slots:[
+        {slot:"Weapon",bases:[["Rattling Quarterstaff",0.55]],mods:[["Adds # to # Cold Damage",0.6],["#% increased Attack Speed",0.7]]},
+        {slot:"Gloves",bases:[["Feathered Gloves",0.38]],mods:[["+# to Level of all Melee Skills",0.44]]},
+      ]},
+    {ascendancy:"Titan",pct:4.9,sample_n:33,skills:[["Shield Wall",0.5],["Sunder",0.3]],
+      slots:[{slot:"Weapon",bases:[["Anvil Maul",0.48]],mods:[["#% increased Physical Damage",0.61]]}]},
+    {ascendancy:"Chronomancer",pct:0.4,sample_n:3,skills:[["Cast on Freeze",0.66]],
+      slots:[{slot:"Weapon",bases:[["Sinner Wand",0.66]],mods:[["#% increased Spell Damage",1.0]]}]},
+  ],
+};
+
+const fmtP = v => (v===1?"1":(v<0.1?v.toFixed(3):v<10?v.toFixed(2):Math.round(v).toLocaleString()));
+const fmtV = v => v>=1000? (v/1000).toFixed(1)+"k" : Math.round(v);
+
+function render(d){
+  document.getElementById("m-league").textContent = d.league||"—";
+  document.getElementById("m-updated").textContent = d.updated||"—";
+  document.getElementById("m-divine").textContent = d.divine_ex||"—";
+  document.getElementById("m-snaps").textContent = d.snapshots||"—";
+  document.getElementById("sample-banner").hidden = !d.sample;
+
+  const pulse = [...d.economy].filter(x=>x.hot || Math.abs(x.momentum_pct)>=15)
+    .sort((a,b)=> (b.hot-a.hot) || Math.abs(b.momentum_pct)-Math.abs(a.momentum_pct)).slice(0,8);
+  const maxV = Math.max(...pulse.map(x=>x.volume),1);
+  document.getElementById("pulse").innerHTML = pulse.map(x=>{
+    const up = x.momentum_pct>=0;
+    return `<div class="card ${x.hot?'hot':''}">
+      <div class="cat">${x.category}</div>
+      <div class="name">${x.name} ${x.hot?'<span class="flame">🔥</span>':''}</div>
+      <div class="row">
+        <div class="price">${fmtP(x.price)}<span class="u">ex</span></div>
+        <div class="mom ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(x.momentum_pct).toFixed(1)}%</div>
+      </div>
+      <div class="bar"><i style="width:${Math.max(6,x.volume/maxV*100)}%"></i></div>
+      <div class="vlabel"><span>объём ${fmtV(x.volume)}</span><span>z ${x.vol_z.toFixed(1)}</span></div>
+    </div>`;
+  }).join("") || `<div class="card"><div class="name" style="color:var(--muted)">Пока нет горячих позиций</div></div>`;
+
+  let sortK="momentum_pct", dir=-1;
+  const tb = document.querySelector("#eco tbody");
+  function draw(){
+    const rows=[...d.economy].sort((a,b)=>{
+      const va=a[sortK],vb=b[sortK];
+      return (typeof va==="number"? va-vb : String(va).localeCompare(String(vb)))*dir;});
+    tb.innerHTML = rows.map(x=>{
+      const up=x.momentum_pct>=0;
+      return `<tr>
+        <td>${x.name}${x.hot?' <span class="flame">🔥</span>':''}</td>
+        <td>${x.category}</td>
+        <td style="color:var(--divine)">${fmtP(x.price)}</td>
+        <td class="${up?'up':'down'}">${up?'+':''}${x.momentum_pct.toFixed(1)}%</td>
+        <td>${fmtV(x.volume)}</td>
+        <td>${x.vol_z.toFixed(2)}</td>
+        <td><span class="chip ${x.vclass}">${x.vclass}</span></td>
+      </tr>`;}).join("");
+  }
+  document.querySelectorAll("#eco thead th").forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k; if(k===sortK) dir*=-1; else {sortK=k; dir=-1;} draw();});
+  document.getElementById("eco-count").textContent = d.economy.length+" позиций · клик по заголовку — сортировка";
+  draw();
+
+  document.getElementById("builds").innerHTML = d.builds.map(b=>`
+    <div class="asc">
+      <div class="top"><h3>${b.ascendancy}</h3><span class="pct">${b.pct.toFixed(1)}%</span></div>
+      <div class="sample">выборка top${b.sample_n}</div>
+      <div class="skill">скилл: ${b.skills.map(s=>`<b>${s[0]}</b> ${Math.round(s[1]*100)}%`).join(" · ")}</div>
+      ${b.slots.map(s=>`
+        <div class="slot">
+          <div class="sname">${s.slot}</div>
+          <div class="base">${s.bases.map(x=>`${x[0]} <span class="p">${Math.round(x[1]*100)}%</span>`).join(" · ")}</div>
+          ${s.mods.map(m=>`<div class="mod">${Math.round(m[1]*100)}% · ${m[0]}</div>`).join("")}
+        </div>`).join("")}
+    </div>`).join("");
+
+  document.getElementById("foot").innerHTML =
+    "Источник экономики — poe2scout · спрос билдов — poe.ninja (top-N масштабируется популярностью). "+
+    "«Спрос до баз/модов» — оценка по фактической экипировке топ-чаров, не гарантия. "+
+    "Данные poe2scout покрывают высоколиквидные предметы; gear закрывается модулем билдов.";
+}
+
+fetch("./data.json").then(r=>{if(!r.ok)throw 0;return r.json();})
+  .then(render).catch(()=>render(SAMPLE));
+</script>
+</body>
+</html>
