@@ -171,7 +171,7 @@ def craft_from_db(db_path, league, plan):
 # ---- selftest --------------------------------------------------------------
 
 def _selftest():
-    # Кейс: bow под Lightning Arrow Deadeye. Эссенция даёт 1 нужный, добиваем ещє 2 слэмами.
+    # Кейс: bow под Lightning Arrow Deadeye. Эссенция даёт 1 нужный, добиваем ещё 2 слэмами.
     plan = CraftPlan(base_name="Warmonger Bow", base_cost=0.5, affix_slots=6,
                      essence_mods=1, target_mods=3, p_hit=0.10, max_annuls=2,
                      prices={"exalted orb": 1.0, "essence": 0.5, "orb of annulment": 3.0})
